@@ -43,7 +43,7 @@ func runCheck(args []string) int {
 	}
 
 	check := exec.Command(args[0], args[1:]...)
-	checkOut, err := check.Output()
+	checkOut, err := check.CombinedOutput()
 	if err != nil {
 		if e2, ok := err.(*exec.ExitError); ok {
 			if s, ok := e2.Sys().(syscall.WaitStatus); ok {
