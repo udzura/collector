@@ -1,16 +1,20 @@
 package cmd
 
 import (
-	// "fmt"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
+	"strings"
 	"syscall"
 
 	"github.com/spf13/cobra"
 )
 
 var deviceName string
+
+var ipFinder = regexp.MustCompile(`inet \d+\.\d+\.\d+\.\d+`)
 
 // clientCmd represents the client command
 var clientCmd = &cobra.Command{
@@ -37,7 +41,7 @@ func runCheck(args []string) int {
 	}
 
 	check := exec.Command(args[0], args[1:]...)
-	_, err := check.Output()
+	checkOut, err := check.Output()
 	if err != nil {
 		if e2, ok := err.(*exec.ExitError); ok {
 			if s, ok := e2.Sys().(syscall.WaitStatus); ok {
@@ -50,7 +54,32 @@ func runCheck(args []string) int {
 		exitStatus = 0
 	}
 
+	var sign string
+	if exitStatus == 0 {
+		sign = "OK"
+	} else {
+		sign = "NG"
+	}
+
+	ipcmd := exec.Command("/sbin/ip", "address", "show", deviceName)
+	ipOut, err := ipcmd.Output()
+	if err != nil {
+		logger.Errorf("Somthing is wrong with getting ip: %s", err.Error())
+		return -1
+	}
+
+	res := ipFinder.Find(ipOut)
+	if len(res) == 0 {
+		logger.Errorf("Somthing is wrong with getting ip: response is empty")
+		return -1
+	}
+	gip := strings.TrimPrefix(string(res), "inet ")
+
+	rep := strings.NewReplacer("\n", " ", "\t", " ")
+	checkOutEscaped := rep.Replace(string(checkOut))
+	fmt.Fprintf(os.Stdout, "status:%s\tcode:%d\tcommand_out:%s\tipaddr:%s",
+		sign, exitStatus, checkOutEscaped, gip)
+
 	logger.Infof("client called: %v", args)
-	logger.Infof("command exit with %d", exitStatus)
 	return exitStatus
 }
