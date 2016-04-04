@@ -34,6 +34,8 @@ func init() {
 }
 
 func runCheck(args []string) int {
+	logger.Debugf("client called: %v", args)
+
 	var exitStatus int
 	if len(args) < 1 {
 		logger.Errorln("Check command is empty.")
@@ -80,6 +82,5 @@ func runCheck(args []string) int {
 	fmt.Fprintf(os.Stdout, "status:%s\tcode:%d\tcommand_out:%s\tipaddr:%s",
 		sign, exitStatus, checkOutEscaped, gip)
 
-	logger.Infof("client called: %v", args)
 	return exitStatus
 }
