@@ -79,7 +79,7 @@ func runCheck(args []string) int {
 
 	rep := strings.NewReplacer("\n", " ", "\t", " ")
 	checkOutEscaped := rep.Replace(string(checkOut))
-	fmt.Fprintf(os.Stdout, "status:%s\tcode:%d\tcommand_out:%s\tipaddr:%s",
+	fmt.Fprintf(os.Stdout, "status:%s\tcode:%d\tcommand_out:%s\tipaddr:%s\n",
 		sign, exitStatus, checkOutEscaped, gip)
 
 	return exitStatus
