@@ -101,26 +101,22 @@ func runWatcher() int {
 
 	logger.Infof("get response: %s(%s)", *target.Name, *target.Id)
 
+	var rrs []*route53.ResourceRecord
+	for _, ip := range ips {
+		rrs = append(rrs, &route53.ResourceRecord{
+			Value: aws.String(ip),
+		})
+	}
 	p2 := &route53.ChangeResourceRecordSetsInput{
 		ChangeBatch: &route53.ChangeBatch{
 			Changes: []*route53.Change{
 				{
 					Action: aws.String("UPSERT"),
 					ResourceRecordSet: &route53.ResourceRecordSet{
-						Name: aws.String(domain + "."),
-						Type: aws.String("A"),
-						ResourceRecords: []*route53.ResourceRecord{
-							{
-								Value: aws.String("192.168.0.100"),
-							},
-							{
-								Value: aws.String("192.168.0.101"),
-							},
-							{
-								Value: aws.String("192.168.0.102"),
-							},
-						},
-						TTL: aws.Int64(60),
+						Name:            aws.String(domain + "."),
+						Type:            aws.String("A"),
+						ResourceRecords: rrs,
+						TTL:             aws.Int64(60),
 					},
 				},
 			},
