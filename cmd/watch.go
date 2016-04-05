@@ -2,7 +2,10 @@ package cmd
 
 import (
 	//"fmt"
+	"bufio"
+	"encoding/json"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -31,7 +34,49 @@ func init() {
 	watchCmd.Flags().StringVarP(&domain, "domain", "D", "", "Full domain name to keep global IPs")
 }
 
+type Healthcheck struct {
+	Node        string
+	CheckID     string
+	Name        string
+	Status      string
+	Notes       string
+	Output      string
+	ServiceID   string
+	ServiceName string
+}
+type Healthchecks []Healthcheck
+
 func runWatcher() int {
+	reader := bufio.NewReader(os.Stdin)
+	_, err := reader.Peek(1)
+	if err != nil {
+		logger.Errorln(err.Error())
+		return -1
+	}
+	defer os.Stdin.Close()
+
+	var checks Healthchecks
+	decoder := json.NewDecoder(reader)
+	if err = decoder.Decode(&checks); err != nil {
+		logger.Errorln(err.Error())
+		return -1
+	}
+	var ips []string
+	for _, check := range checks {
+		for _, rec := range strings.Split(check.Output, "\t") {
+			pair := strings.SplitN(rec, ":", 2)
+			logger.Infof("%s = %s", pair[0], pair[1])
+			if pair[0] == "ipaddr" {
+				ips = append(ips, pair[1])
+			}
+		}
+	}
+	if len(ips) == 0 {
+		logger.Warnln("Hey, no Ip included. Skipping for fail-safe.")
+		return 1
+	}
+	logger.Infof("IPs: %v", ips)
+
 	svc := route53.New(session.New())
 	p1 := &route53.ListHostedZonesByNameInput{
 		DNSName: aws.String(hostedZone),
