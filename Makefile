@@ -1,4 +1,4 @@
-VERSION := $(shell go run main.go version | sed 's/version: //')
+VERSION := $(shell go run main.go version | sed 's/version: /v/')
 
 collector: test
 	go build ./.
