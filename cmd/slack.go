@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 
 	slack "github.com/monochromegane/slack-incoming-webhooks"
 )
@@ -71,10 +72,19 @@ func toDiff(ipsBefore, ipsAfter []string) string {
 		}
 	}
 
-	f := `+%v
- %v
--%v`
-	return fmt.Sprintf(f, added, existsBoth, deleted)
+	diff := ""
+	if len(added) > 0 {
+		diff += fmt.Sprintf("+%v\n", added)
+	}
+	if len(existsBoth) > 0 {
+		diff += fmt.Sprintf(" %v\n", existsBoth)
+	}
+	if len(deleted) > 0 {
+		diff += fmt.Sprintf("-%v\n", deleted)
+	}
+	diff = strings.TrimSuffix(diff, "\n")
+
+	return diff
 }
 
 func init() {

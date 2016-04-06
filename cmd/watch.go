@@ -101,13 +101,34 @@ func runWatcher() int {
 
 	logger.Infof("get response: %s(%s)", *target.Name, *target.Id)
 
+	var oldIPs []string
+	p2 := &route53.ListResourceRecordSetsInput{
+		HostedZoneId:    target.Id,
+		StartRecordName: aws.String(domain + "."),
+		StartRecordType: aws.String("A"),
+	}
+	r2, err := svc.ListResourceRecordSets(p2)
+	if err != nil {
+		logger.Errorln(err.Error())
+		return -1
+	}
+	if len(r2.ResourceRecordSets) > 0 {
+		rrset := r2.ResourceRecordSets[0]
+		if *rrset.Type == "A" {
+			for _, rr := range rrset.ResourceRecords {
+				oldIPs = append(oldIPs, *rr.Value)
+			}
+		}
+	}
+	logger.Infof("existing IPs: %v", oldIPs)
+
 	var rrs []*route53.ResourceRecord
 	for _, ip := range ips {
 		rrs = append(rrs, &route53.ResourceRecord{
 			Value: aws.String(ip),
 		})
 	}
-	p2 := &route53.ChangeResourceRecordSetsInput{
+	p3 := &route53.ChangeResourceRecordSetsInput{
 		ChangeBatch: &route53.ChangeBatch{
 			Changes: []*route53.Change{
 				{
@@ -124,28 +145,14 @@ func runWatcher() int {
 		},
 		HostedZoneId: target.Id,
 	}
-	r2, err := svc.ChangeResourceRecordSets(p2)
+	r3, err := svc.ChangeResourceRecordSets(p3)
 	if err != nil {
 		logger.Errorln(err.Error())
 		return -1
 	}
 
-	NotifyToSlack(
-		domain,
-		[]string{
-			"192.168.0.1",
-			"192.168.0.2",
-			"192.168.0.3",
-			"192.168.0.4",
-		},
-		[]string{
-			"192.168.0.3",
-			"192.168.0.4",
-			"192.168.0.5",
-			"192.168.0.6",
-		},
-	)
-	logger.Infof("Success: %v", r2.ChangeInfo)
+	NotifyToSlack(domain, oldIPs, ips)
+	logger.Infof("Success: %v", r3.ChangeInfo)
 
 	return 0
 }
