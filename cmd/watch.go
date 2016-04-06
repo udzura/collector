@@ -130,6 +130,21 @@ func runWatcher() int {
 		return -1
 	}
 
+	NotifyToSlack(
+		domain,
+		[]string{
+			"192.168.0.1",
+			"192.168.0.2",
+			"192.168.0.3",
+			"192.168.0.4",
+		},
+		[]string{
+			"192.168.0.3",
+			"192.168.0.4",
+			"192.168.0.5",
+			"192.168.0.6",
+		},
+	)
 	logger.Infof("Success: %v", r2.ChangeInfo)
 
 	return 0
