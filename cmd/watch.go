@@ -14,6 +14,7 @@ import (
 )
 
 var hostedZone string
+var checkID string
 var domains []string
 
 // watchCmd represents the watch command
@@ -31,6 +32,7 @@ func init() {
 	RootCmd.AddCommand(watchCmd)
 
 	watchCmd.Flags().StringVarP(&hostedZone, "hosted-zone", "H", "", "Hosted zone to update")
+	watchCmd.Flags().StringVarP(&checkID, "check-id", "C", "", "CheckID to use for IP output")
 	watchCmd.Flags().StringSliceVarP(&domains, "domain", "D", []string{}, "Full domain name to keep global IPs")
 }
 
@@ -47,6 +49,9 @@ func runWatcher() int {
 	if err != nil {
 		collectorlib.Logger.Errorln(err.Error())
 		return -1
+	}
+	if checkID != "" {
+		req.TargetCheckID = checkID
 	}
 
 	svc := route53.New(session.New())

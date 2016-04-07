@@ -182,3 +182,69 @@ func TestParseRequest(t *testing.T) {
 		t.Errorf("req.IPsByTag(\"*\") expected lb-a + lb-b, got %v", ips)
 	}
 }
+
+func TestRequestCheckID(t *testing.T) {
+	testJson2 := `[
+  {
+    "Node": {
+      "Node": "nginx001",
+      "Address": "10.1.10.101"
+    },
+    "Service": {
+      "ID": "nginx",
+      "Service": "nginx",
+      "Tags": ["nginx", "lb-a"],
+      "Port": 80
+    },
+    "Checks": [
+      {
+	"Node": "nginx001",
+	"CheckID": "service:nginx",
+	"Name": "Service 'nginx' check",
+	"Status": "passing",
+	"Notes": "",
+	"Output": "ipaddr:192.0.2.101",
+	"ServiceID": "redis",
+	"ServiceName": "redis"
+      },
+      {
+	"Node": "nginx001",
+	"CheckID": "service:nginx_another_check",
+	"Name": "Service 'nginx' check",
+	"Status": "passing",
+	"Notes": "",
+	"Output": "ipaddr:192.0.2.111",
+	"ServiceID": "redis",
+	"ServiceName": "redis"
+      },
+      {
+	"Node": "foobar",
+	"CheckID": "serfHealth",
+	"Name": "Serf Health Status",
+	"Status": "passing",
+	"Notes": "",
+	"Output": "",
+	"ServiceID": "",
+	"ServiceName": ""
+      }
+    ]
+  }
+]
+`
+	input := strings.NewReader(testJson2)
+	req, err := ParseRequest(input)
+	if err != nil {
+		t.Fatalf("Error parsing: %s", err.Error())
+	}
+
+	ips := req.IPsByTag("*")
+	if len(ips) != 1 || ips[0] != "192.0.2.101" {
+		t.Errorf("Check service:nginx expected to have IP [\"192.0.2.101\"], got %v", ips)
+	}
+
+	req.TargetCheckID = "service:nginx_another_check"
+	ips = req.IPsByTag("*")
+	if len(ips) != 1 || ips[0] != "192.0.2.111" {
+		t.Errorf("Check service:nginx_another_check expected to have IP [\"192.0.2.111\"], got %v", ips)
+	}
+}
