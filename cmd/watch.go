@@ -107,38 +107,43 @@ func runWatcher() int {
 			}
 		}
 		logger.Infof("existing IPs: %v", oldIPs)
+		diff := collectorlib.NewDiff(oldIPs, ips)
 
-		var rrs []*route53.ResourceRecord
-		for _, ip := range ips {
-			rrs = append(rrs, &route53.ResourceRecord{
-				Value: aws.String(ip),
-			})
-		}
-		p3 := &route53.ChangeResourceRecordSetsInput{
-			ChangeBatch: &route53.ChangeBatch{
-				Changes: []*route53.Change{
-					{
-						Action: aws.String("UPSERT"),
-						ResourceRecordSet: &route53.ResourceRecordSet{
-							Name:            aws.String(domain.FQDN + "."),
-							Type:            aws.String("A"),
-							ResourceRecords: rrs,
-							TTL:             aws.Int64(60),
+		if diff.IsChanged() {
+			var rrs []*route53.ResourceRecord
+			for _, ip := range ips {
+				rrs = append(rrs, &route53.ResourceRecord{
+					Value: aws.String(ip),
+				})
+			}
+			p3 := &route53.ChangeResourceRecordSetsInput{
+				ChangeBatch: &route53.ChangeBatch{
+					Changes: []*route53.Change{
+						{
+							Action: aws.String("UPSERT"),
+							ResourceRecordSet: &route53.ResourceRecordSet{
+								Name:            aws.String(domain.FQDN + "."),
+								Type:            aws.String("A"),
+								ResourceRecords: rrs,
+								TTL:             aws.Int64(60),
+							},
 						},
 					},
+					Comment: aws.String("Update via collector"),
 				},
-				Comment: aws.String("Update via collector"),
-			},
-			HostedZoneId: target.Id,
-		}
-		r3, err := svc.ChangeResourceRecordSets(p3)
-		if err != nil {
-			logger.Errorln(err.Error())
-			return -1
-		}
+				HostedZoneId: target.Id,
+			}
+			r3, err := svc.ChangeResourceRecordSets(p3)
+			if err != nil {
+				logger.Errorln(err.Error())
+				return -1
+			}
 
-		NotifyToSlack(domain.FQDN, oldIPs, ips)
-		logger.Infof("Success: %v", r3.ChangeInfo)
+			NotifyToSlack(domain.FQDN, diff)
+			logger.Infof("Success: %v", r3.ChangeInfo)
+		} else {
+			logger.Infof("No change, skipping.")
+		}
 	}
 
 	return 0

@@ -3,10 +3,9 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"sort"
-	"strings"
 
 	slack "github.com/monochromegane/slack-incoming-webhooks"
+	"github.com/udzura/collector/collectorlib"
 )
 
 var incomingWebhookUrl string
@@ -17,7 +16,7 @@ var bodyFormat = "*Domain:* %s\n" +
 	"%s\n" +
 	"```"
 
-func NotifyToSlack(domain string, ipsBefore, ipsAfter []string) {
+func NotifyToSlack(domain string, diff *collectorlib.Diff) {
 	if incomingWebhookUrl == "" {
 		return
 	}
@@ -27,7 +26,7 @@ func NotifyToSlack(domain string, ipsBefore, ipsAfter []string) {
 		Attachments: []*slack.Attachment{
 			{
 				Pretext:    "DNS Records are changed:",
-				Text:       fmt.Sprintf(bodyFormat, domain, toDiff(ipsBefore, ipsAfter)),
+				Text:       fmt.Sprintf(bodyFormat, domain, diff.ToString()),
 				Color:      "#ff6600",
 				MarkdownIn: []string{"text"},
 			},
@@ -47,44 +46,6 @@ func NotifyToSlack(domain string, ipsBefore, ipsAfter []string) {
 	if err != nil {
 		logger.Warnf("Notification error: %s, but ignored.", err.Error())
 	}
-}
-
-func toDiff(ipsBefore, ipsAfter []string) string {
-	sort.Strings(ipsBefore)
-	sort.Strings(ipsAfter)
-	var added, deleted, existsBoth []string
-	deleted = append(deleted, ipsBefore...)
-	added = append(added, ipsAfter...)
-	for _, i1 := range ipsAfter {
-		for idx, i2 := range deleted {
-			if i1 == i2 {
-				deleted = append(deleted[:idx], deleted[idx+1:]...)
-				existsBoth = append(existsBoth, i1)
-			}
-		}
-	}
-
-	for _, i1 := range existsBoth {
-		for idx, i2 := range added {
-			if i1 == i2 {
-				added = append(added[:idx], added[idx+1:]...)
-			}
-		}
-	}
-
-	diff := ""
-	if len(added) > 0 {
-		diff += fmt.Sprintf("+%v\n", added)
-	}
-	if len(existsBoth) > 0 {
-		diff += fmt.Sprintf(" %v\n", existsBoth)
-	}
-	if len(deleted) > 0 {
-		diff += fmt.Sprintf("-%v\n", deleted)
-	}
-	diff = strings.TrimSuffix(diff, "\n")
-
-	return diff
 }
 
 func init() {
