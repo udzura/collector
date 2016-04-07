@@ -139,7 +139,7 @@ func runWatcher() int {
 				return -1
 			}
 
-			NotifyToSlack(domain.FQDN, diff)
+			collectorlib.NotifyToSlack(domain.FQDN, diff)
 			logger.Infof("Success: %v", r3.ChangeInfo)
 		} else {
 			logger.Infof("No change, skipping.")

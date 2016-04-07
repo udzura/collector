@@ -1,14 +1,13 @@
-package cmd
+package collectorlib
 
 import (
 	"fmt"
 	"os"
 
 	slack "github.com/monochromegane/slack-incoming-webhooks"
-	"github.com/udzura/collector/collectorlib"
 )
 
-var incomingWebhookUrl string
+var incomingWebhookUrl, channel string
 
 var bodyFormat = "*Domain:* %s\n" +
 	"*Change detail:*\n" +
@@ -16,7 +15,7 @@ var bodyFormat = "*Domain:* %s\n" +
 	"%s\n" +
 	"```"
 
-func NotifyToSlack(domain string, diff *collectorlib.Diff) {
+func NotifyToSlack(domain string, diff *Diff) {
 	if incomingWebhookUrl == "" {
 		return
 	}
@@ -32,6 +31,9 @@ func NotifyToSlack(domain string, diff *collectorlib.Diff) {
 			},
 		},
 	}
+	if channel != "" {
+		payload.Channel = channel
+	}
 	if emoji := os.Getenv("SLACK_ICON_EMOJI"); emoji != "" {
 		payload.IconEmoji = emoji
 	}
@@ -44,10 +46,11 @@ func NotifyToSlack(domain string, diff *collectorlib.Diff) {
 	}
 	err := cli.Post(payload)
 	if err != nil {
-		logger.Warnf("Notification error: %s, but ignored.", err.Error())
+		// logger.Warnf("Notification error: %s, but ignored.", err.Error())
 	}
 }
 
 func init() {
 	incomingWebhookUrl = os.Getenv("SLACK_URL")
+	channel = os.Getenv("SLACK_CHANNEL")
 }
