@@ -73,18 +73,24 @@ func runWatcher() int {
 
 	logger.Infof("get response: %s(%s)", *target.Name, *target.Id)
 
-	for _, domain := range domains {
-		ips := req.IPsByTag("*")
+	domainModels, err := collectorlib.NewDomains(domains)
+	if err != nil {
+		logger.Errorln(err.Error())
+		return -1
+	}
+
+	for _, domain := range domainModels {
+		ips := req.IPsByTag(domain.Tag)
 		if len(ips) == 0 {
 			logger.Warnln("Hey, no Ip included. Skipping for fail-safe.")
-			return 1
+			continue
 		}
 		logger.Infof("IPs: %v", ips)
 
 		var oldIPs []string
 		p2 := &route53.ListResourceRecordSetsInput{
 			HostedZoneId:    target.Id,
-			StartRecordName: aws.String(domain + "."),
+			StartRecordName: aws.String(domain.FQDN + "."),
 			StartRecordType: aws.String("A"),
 		}
 		r2, err := svc.ListResourceRecordSets(p2)
@@ -114,7 +120,7 @@ func runWatcher() int {
 					{
 						Action: aws.String("UPSERT"),
 						ResourceRecordSet: &route53.ResourceRecordSet{
-							Name:            aws.String(domain + "."),
+							Name:            aws.String(domain.FQDN + "."),
 							Type:            aws.String("A"),
 							ResourceRecords: rrs,
 							TTL:             aws.Int64(60),
@@ -131,7 +137,7 @@ func runWatcher() int {
 			return -1
 		}
 
-		NotifyToSlack(domain, oldIPs, ips)
+		NotifyToSlack(domain.FQDN, oldIPs, ips)
 		logger.Infof("Success: %v", r3.ChangeInfo)
 	}
 
