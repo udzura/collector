@@ -24,7 +24,7 @@ var testJson = `[
 	"Name": "Service 'nginx' check",
 	"Status": "passing",
 	"Notes": "",
-	"Output": "ipaddr\t192.0.2.101",
+	"Output": "ipaddr:192.0.2.101",
 	"ServiceID": "redis",
 	"ServiceName": "redis"
       },
@@ -58,7 +58,7 @@ var testJson = `[
 	"Name": "Service 'nginx' check",
 	"Status": "passing",
 	"Notes": "",
-	"Output": "ipaddr\t192.0.2.102",
+	"Output": "ipaddr:192.0.2.102",
 	"ServiceID": "redis",
 	"ServiceName": "redis"
       },
@@ -92,7 +92,7 @@ var testJson = `[
 	"Name": "Service 'nginx' check",
 	"Status": "passing",
 	"Notes": "",
-	"Output": "ipaddr\t192.0.2.103",
+	"Output": "ipaddr:192.0.2.103",
 	"ServiceID": "redis",
 	"ServiceName": "redis"
       },
@@ -101,6 +101,40 @@ var testJson = `[
 	"CheckID": "serfHealth",
 	"Name": "Serf Health Status",
 	"Status": "passing",
+	"Notes": "",
+	"Output": "",
+	"ServiceID": "",
+	"ServiceName": ""
+      }
+    ]
+  },
+  {
+    "Node": {
+      "Node": "nginx004",
+      "Address": "10.1.10.104"
+    },
+    "Service": {
+      "ID": "nginx",
+      "Service": "nginx",
+      "Tags": ["nginx", "lb-b"],
+      "Port": 80
+    },
+    "Checks": [
+      {
+	"Node": "nginx003",
+	"CheckID": "service:nginx",
+	"Name": "Service 'nginx' check",
+	"Status": "failing",
+	"Notes": "",
+	"Output": "ipaddr:192.0.2.104",
+	"ServiceID": "redis",
+	"ServiceName": "redis"
+      },
+      {
+	"Node": "foobar",
+	"CheckID": "serfHealth",
+	"Name": "Serf Health Status",
+	"Status": "failing",
 	"Notes": "",
 	"Output": "",
 	"ServiceID": "",
@@ -119,8 +153,8 @@ func TestParseRequest(t *testing.T) {
 		t.Fatalf("Error parsing: %s", err.Error())
 	}
 
-	if size := len(req.Root); size != 3 {
-		t.Errorf("req.Root size expected 3, got %d", size)
+	if size := len(req.Root); size != 4 {
+		t.Errorf("req.Root size expected 4, got %d", size)
 	}
 
 	tags := req.Root[0].Service.Tags
@@ -131,5 +165,20 @@ func TestParseRequest(t *testing.T) {
 	tags = req.Root[2].Service.Tags
 	if tags[0] != "nginx" || tags[1] != "lb-b" {
 		t.Errorf("req.Root[2].Service.Tags expected [\"nginx\", \"lb-b\"], got %v", tags)
+	}
+
+	ips := req.IPsByTag("lb-a")
+	if len(ips) != 2 || ips[0] != "192.0.2.101" || ips[1] != "192.0.2.102" {
+		t.Errorf("req.IPsByTag(\"lb-a\") expected [\"192.0.2.101\", \"192.0.2.102\"], got %v", ips)
+	}
+
+	ips = req.IPsByTag("lb-b")
+	if len(ips) != 1 || ips[0] != "192.0.2.103" {
+		t.Errorf("req.IPsByTag(\"lb-b\") expected [\"192.0.2.103\"], got %v", ips)
+	}
+
+	ips = req.IPsByTag("*")
+	if len(ips) != 3 {
+		t.Errorf("req.IPsByTag(\"*\") expected lb-a + lb-b, got %v", ips)
 	}
 }
