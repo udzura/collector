@@ -20,7 +20,7 @@ sudo cp collector_v0.2.0-linux-amd64 /usr/local/bin/collector
   "service": {
     "id": "nginx",
     "name": "nginx",
-    "tags": ["nginx"],
+    "tags": ["nginx", "lb-a"],
     "port": 80,
     "check":{
       "script": "/usr/local/bin/collector client --dev eth0 -- /usr/lib64/nagios/plugins/check_http -H localhost",
@@ -38,7 +38,7 @@ $ cat /root/.aws/credentials
 aws_access_key_id = AKIXXXXXX...
 aws_secret_access_key = 4Jr...............
 $ export SLACK_URL=https://your.slack.com/your/incoming/webhook-url
-$ consul watch -type checks -service nginx -- \
+$ consul watch -type service -service nginx -- \
       /usr/local/bin/collector watch --hosted-zone foo.example.com --domain front.foo.example.com
 ## Recommended to use systemc Unit file or like.
 ```

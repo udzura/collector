@@ -3,11 +3,10 @@ package cmd
 import (
 	//"fmt"
 	"bufio"
-	"encoding/json"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/udzura/collector/collectorlib"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -55,22 +54,12 @@ func runWatcher() int {
 	}
 	defer os.Stdin.Close()
 
-	var checks Healthchecks
-	decoder := json.NewDecoder(reader)
-	if err = decoder.Decode(&checks); err != nil {
+	req, err := collectorlib.ParseRequest(reader)
+	if err != nil {
 		logger.Errorln(err.Error())
 		return -1
 	}
-	var ips []string
-	for _, check := range checks {
-		for _, rec := range strings.Split(check.Output, "\t") {
-			pair := strings.SplitN(rec, ":", 2)
-			logger.Infof("%s = %s", pair[0], pair[1])
-			if pair[0] == "ipaddr" {
-				ips = append(ips, pair[1])
-			}
-		}
-	}
+	ips := req.IPsByTag("*")
 	if len(ips) == 0 {
 		logger.Warnln("Hey, no Ip included. Skipping for fail-safe.")
 		return 1
