@@ -46,7 +46,7 @@ func NotifyToSlack(domain string, diff *Diff) {
 	}
 	err := cli.Post(payload)
 	if err != nil {
-		// logger.Warnf("Notification error: %s, but ignored.", err.Error())
+		Logger.Warnf("Notification error: %s, but ignored.", err.Error())
 	}
 }
 

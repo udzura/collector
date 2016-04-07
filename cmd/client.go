@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
+	"github.com/udzura/collector/collectorlib"
 )
 
 var deviceName string
@@ -34,11 +35,11 @@ func init() {
 }
 
 func runCheck(args []string) int {
-	logger.Debugf("client called: %v", args)
+	collectorlib.Logger.Debugf("client called: %v", args)
 
 	var exitStatus int
 	if len(args) < 1 {
-		logger.Errorln("Check command is empty.")
+		collectorlib.Logger.Errorln("Check command is empty.")
 		return -1
 	}
 
@@ -66,13 +67,13 @@ func runCheck(args []string) int {
 	ipcmd := exec.Command("/sbin/ip", "address", "show", deviceName)
 	ipOut, err := ipcmd.Output()
 	if err != nil {
-		logger.Errorf("Somthing is wrong with getting ip: %s", err.Error())
+		collectorlib.Logger.Errorf("Somthing is wrong with getting ip: %s", err.Error())
 		return -1
 	}
 
 	res := ipFinder.Find(ipOut)
 	if len(res) == 0 {
-		logger.Errorf("Somthing is wrong with getting ip: response is empty")
+		collectorlib.Logger.Errorf("Somthing is wrong with getting ip: response is empty")
 		return -1
 	}
 	gip := strings.TrimPrefix(string(res), "inet ")

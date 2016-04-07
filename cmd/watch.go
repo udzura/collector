@@ -38,14 +38,14 @@ func runWatcher() int {
 	reader := bufio.NewReader(os.Stdin)
 	_, err := reader.Peek(1)
 	if err != nil {
-		logger.Errorln(err.Error())
+		collectorlib.Logger.Errorln(err.Error())
 		return -1
 	}
 	defer os.Stdin.Close()
 
 	req, err := collectorlib.ParseRequest(reader)
 	if err != nil {
-		logger.Errorln(err.Error())
+		collectorlib.Logger.Errorln(err.Error())
 		return -1
 	}
 
@@ -56,7 +56,7 @@ func runWatcher() int {
 	resp, err := svc.ListHostedZonesByName(p1)
 
 	if err != nil {
-		logger.Errorln(err.Error())
+		collectorlib.Logger.Errorln(err.Error())
 		return -1
 	}
 
@@ -67,25 +67,25 @@ func runWatcher() int {
 		}
 	}
 	if target == nil {
-		logger.Errorf("Hosted zone not found. response: %v", resp.HostedZones)
+		collectorlib.Logger.Errorf("Hosted zone not found. response: %v", resp.HostedZones)
 		return -1
 	}
 
-	logger.Infof("get response: %s(%s)", *target.Name, *target.Id)
+	collectorlib.Logger.Infof("get response: %s(%s)", *target.Name, *target.Id)
 
 	domainModels, err := collectorlib.NewDomains(domains)
 	if err != nil {
-		logger.Errorln(err.Error())
+		collectorlib.Logger.Errorln(err.Error())
 		return -1
 	}
 
 	for _, domain := range domainModels {
 		ips := req.IPsByTag(domain.Tag)
 		if len(ips) == 0 {
-			logger.Warnln("Hey, no Ip included. Skipping for fail-safe.")
+			collectorlib.Logger.Warnln("Hey, no Ip included. Skipping for fail-safe.")
 			continue
 		}
-		logger.Infof("IPs: %v", ips)
+		collectorlib.Logger.Infof("IPs: %v", ips)
 
 		var oldIPs []string
 		p2 := &route53.ListResourceRecordSetsInput{
@@ -95,7 +95,7 @@ func runWatcher() int {
 		}
 		r2, err := svc.ListResourceRecordSets(p2)
 		if err != nil {
-			logger.Errorln(err.Error())
+			collectorlib.Logger.Errorln(err.Error())
 			return -1
 		}
 		if len(r2.ResourceRecordSets) > 0 {
@@ -106,7 +106,7 @@ func runWatcher() int {
 				}
 			}
 		}
-		logger.Infof("existing IPs: %v", oldIPs)
+		collectorlib.Logger.Infof("existing IPs: %v", oldIPs)
 		diff := collectorlib.NewDiff(oldIPs, ips)
 
 		if diff.IsChanged() {
@@ -135,14 +135,14 @@ func runWatcher() int {
 			}
 			r3, err := svc.ChangeResourceRecordSets(p3)
 			if err != nil {
-				logger.Errorln(err.Error())
+				collectorlib.Logger.Errorln(err.Error())
 				return -1
 			}
 
 			collectorlib.NotifyToSlack(domain.FQDN, diff)
-			logger.Infof("Success: %v", r3.ChangeInfo)
+			collectorlib.Logger.Infof("Success: %v", r3.ChangeInfo)
 		} else {
-			logger.Infof("No change, skipping.")
+			collectorlib.Logger.Infof("No change, skipping.")
 		}
 	}
 
