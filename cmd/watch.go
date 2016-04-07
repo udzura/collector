@@ -13,7 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53"
 )
 
-var hostedZone, domain string
+var hostedZone string
+var domains []string
 
 // watchCmd represents the watch command
 var watchCmd = &cobra.Command{
@@ -30,20 +31,8 @@ func init() {
 	RootCmd.AddCommand(watchCmd)
 
 	watchCmd.Flags().StringVarP(&hostedZone, "hosted-zone", "H", "", "Hosted zone to update")
-	watchCmd.Flags().StringVarP(&domain, "domain", "D", "", "Full domain name to keep global IPs")
+	watchCmd.Flags().StringSliceVarP(&domains, "domain", "D", []string{}, "Full domain name to keep global IPs")
 }
-
-type Healthcheck struct {
-	Node        string
-	CheckID     string
-	Name        string
-	Status      string
-	Notes       string
-	Output      string
-	ServiceID   string
-	ServiceName string
-}
-type Healthchecks []Healthcheck
 
 func runWatcher() int {
 	reader := bufio.NewReader(os.Stdin)
@@ -59,12 +48,6 @@ func runWatcher() int {
 		logger.Errorln(err.Error())
 		return -1
 	}
-	ips := req.IPsByTag("*")
-	if len(ips) == 0 {
-		logger.Warnln("Hey, no Ip included. Skipping for fail-safe.")
-		return 1
-	}
-	logger.Infof("IPs: %v", ips)
 
 	svc := route53.New(session.New())
 	p1 := &route53.ListHostedZonesByNameInput{
@@ -90,58 +73,67 @@ func runWatcher() int {
 
 	logger.Infof("get response: %s(%s)", *target.Name, *target.Id)
 
-	var oldIPs []string
-	p2 := &route53.ListResourceRecordSetsInput{
-		HostedZoneId:    target.Id,
-		StartRecordName: aws.String(domain + "."),
-		StartRecordType: aws.String("A"),
-	}
-	r2, err := svc.ListResourceRecordSets(p2)
-	if err != nil {
-		logger.Errorln(err.Error())
-		return -1
-	}
-	if len(r2.ResourceRecordSets) > 0 {
-		rrset := r2.ResourceRecordSets[0]
-		if *rrset.Type == "A" {
-			for _, rr := range rrset.ResourceRecords {
-				oldIPs = append(oldIPs, *rr.Value)
+	for _, domain := range domains {
+		ips := req.IPsByTag("*")
+		if len(ips) == 0 {
+			logger.Warnln("Hey, no Ip included. Skipping for fail-safe.")
+			return 1
+		}
+		logger.Infof("IPs: %v", ips)
+
+		var oldIPs []string
+		p2 := &route53.ListResourceRecordSetsInput{
+			HostedZoneId:    target.Id,
+			StartRecordName: aws.String(domain + "."),
+			StartRecordType: aws.String("A"),
+		}
+		r2, err := svc.ListResourceRecordSets(p2)
+		if err != nil {
+			logger.Errorln(err.Error())
+			return -1
+		}
+		if len(r2.ResourceRecordSets) > 0 {
+			rrset := r2.ResourceRecordSets[0]
+			if *rrset.Type == "A" {
+				for _, rr := range rrset.ResourceRecords {
+					oldIPs = append(oldIPs, *rr.Value)
+				}
 			}
 		}
-	}
-	logger.Infof("existing IPs: %v", oldIPs)
+		logger.Infof("existing IPs: %v", oldIPs)
 
-	var rrs []*route53.ResourceRecord
-	for _, ip := range ips {
-		rrs = append(rrs, &route53.ResourceRecord{
-			Value: aws.String(ip),
-		})
-	}
-	p3 := &route53.ChangeResourceRecordSetsInput{
-		ChangeBatch: &route53.ChangeBatch{
-			Changes: []*route53.Change{
-				{
-					Action: aws.String("UPSERT"),
-					ResourceRecordSet: &route53.ResourceRecordSet{
-						Name:            aws.String(domain + "."),
-						Type:            aws.String("A"),
-						ResourceRecords: rrs,
-						TTL:             aws.Int64(60),
+		var rrs []*route53.ResourceRecord
+		for _, ip := range ips {
+			rrs = append(rrs, &route53.ResourceRecord{
+				Value: aws.String(ip),
+			})
+		}
+		p3 := &route53.ChangeResourceRecordSetsInput{
+			ChangeBatch: &route53.ChangeBatch{
+				Changes: []*route53.Change{
+					{
+						Action: aws.String("UPSERT"),
+						ResourceRecordSet: &route53.ResourceRecordSet{
+							Name:            aws.String(domain + "."),
+							Type:            aws.String("A"),
+							ResourceRecords: rrs,
+							TTL:             aws.Int64(60),
+						},
 					},
 				},
+				Comment: aws.String("Update via collector"),
 			},
-			Comment: aws.String("Update via collector"),
-		},
-		HostedZoneId: target.Id,
-	}
-	r3, err := svc.ChangeResourceRecordSets(p3)
-	if err != nil {
-		logger.Errorln(err.Error())
-		return -1
-	}
+			HostedZoneId: target.Id,
+		}
+		r3, err := svc.ChangeResourceRecordSets(p3)
+		if err != nil {
+			logger.Errorln(err.Error())
+			return -1
+		}
 
-	NotifyToSlack(domain, oldIPs, ips)
-	logger.Infof("Success: %v", r3.ChangeInfo)
+		NotifyToSlack(domain, oldIPs, ips)
+		logger.Infof("Success: %v", r3.ChangeInfo)
+	}
 
 	return 0
 }
