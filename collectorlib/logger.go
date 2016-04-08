@@ -1,4 +1,4 @@
-package cmd
+package collectorlib
 
 import (
 	"os"
@@ -6,7 +6,7 @@ import (
 	"github.com/Sirupsen/logrus"
 )
 
-var logger = logrus.New()
+var Logger = logrus.New()
 
 func init() {
 	logrus.SetOutput(os.Stderr)

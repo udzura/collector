@@ -6,7 +6,7 @@ Collector of global IP and put them into DNS
 
 * Install binary
 
-```
+```bash
 wget https://github.com/udzura/collector/releases/download/v0.2.0/collector_v0.2.0-linux-amd64.zip
 unzip collector_v0.2.0-linux-amd64.zip
 sudo cp collector_v0.2.0-linux-amd64 /usr/local/bin/collector
@@ -15,12 +15,12 @@ sudo cp collector_v0.2.0-linux-amd64 /usr/local/bin/collector
 * collector is dependent on [consul](https://www.consul.io/), so create its cluster.
 * Add the consul's check for each client instances, like:
 
-```
+```json
 {
   "service": {
     "id": "nginx",
     "name": "nginx",
-    "tags": ["nginx"],
+    "tags": ["nginx", "lb-a"],
     "port": 80,
     "check":{
       "script": "/usr/local/bin/collector client --dev eth0 -- /usr/lib64/nagios/plugins/check_http -H localhost",
@@ -38,12 +38,59 @@ $ cat /root/.aws/credentials
 aws_access_key_id = AKIXXXXXX...
 aws_secret_access_key = 4Jr...............
 $ export SLACK_URL=https://your.slack.com/your/incoming/webhook-url
-$ consul watch -type checks -service nginx -- \
+$ consul watch -type service -service nginx -- \
       /usr/local/bin/collector watch --hosted-zone foo.example.com --domain front.foo.example.com
 ## Recommended to use systemc Unit file or like.
 ```
 
 * Then, your consul automatically get Nginx health, and then update IPs on your Route53.
+
+### Manage multi domain in one watch process
+
+Create check with tagged `'lb-a'`:
+
+```json
+{
+  "service": {
+    "id": "nginx",
+    "name": "nginx",
+    "tags": ["nginx", "lb-a"],
+    "port": 80,
+    "check":{
+      "script": "/usr/local/bin/collector client --dev eth0 -- /usr/lib64/nagios/plugins/check_http -H localhost",
+      "interval": "30s"
+    }
+  }
+}
+```
+
+At another host, reate check with tagged `'lb-b'`:
+
+```json
+{
+  "service": {
+    "id": "nginx",
+    "name": "nginx",
+    "tags": ["nginx", "lb-b"],
+    "port": 80,
+    "check":{
+      "script": "/usr/local/bin/collector client --dev eth0 -- /usr/lib64/nagios/plugins/check_http -H localhost",
+      "interval": "30s"
+    }
+  }
+}
+```
+
+Then, pass multi `--domain` option with tag to consul watch:
+
+```console
+$ consul watch -type checks -service nginx -- \
+      /usr/local/bin/collector watch --hosted-zone foo.example.com \
+      --domain front-a.foo.example.com:lb-a \
+      --domain front-b.foo.example.com:lb-b
+```
+
+After this, check with `lb-a` effects domain `front-a.foo.example.com`, and `lb-b` effects `front-b.foo.example.com`.
 
 ### Command options details
 
@@ -54,6 +101,7 @@ $ consul watch -type checks -service nginx -- \
 * `collector watch` is intended to run under `consul watch`
   * AWS credential info (`.aws/credential` or `AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY/AWS_REGION` environ) is required
   * If you set `SLACK_URL` environ, then changes are notified.
+  * Pass `--check-id` if your health check has CheckID which is a consul default `service:{{service_name}}`.
 
 ## Note
 
