@@ -84,7 +84,7 @@ At another host, reate check with tagged `'lb-b'`:
 Then, pass multi `--domain` option with tag to consul watch:
 
 ```console
-$ consul watch -type checks -service nginx -- \
+$ consul watch -type service -service nginx -- \
       /usr/local/bin/collector watch --hosted-zone foo.example.com \
       --domain front-a.foo.example.com:lb-a \
       --domain front-b.foo.example.com:lb-b
