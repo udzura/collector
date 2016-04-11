@@ -103,6 +103,11 @@ After this, check with `lb-a` effects domain `front-a.foo.example.com`, and `lb-
   * If you set `SLACK_URL` environ, then changes are notified.
   * Pass `--check-id` if your health check has CheckID which is a consul default `service:{{service_name}}`.
 
+* `collector watch` respects environment variables:
+  * Which are useful working with systemd unit file
+  * `COLLECTOR_HOSTED_ZONE`, `COLLECTOR_DOMAIN` and `COLLECTOR_CHECK_ID`.
+  * Note: `COLLECTOR_DOMAIN` shoulw be splited with white space ` `
+
 ## Note
 
 * This product is exoerimental and before alpha release.
