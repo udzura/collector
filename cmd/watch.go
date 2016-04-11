@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/udzura/collector/collectorlib"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -34,6 +35,25 @@ func init() {
 	watchCmd.Flags().StringVarP(&hostedZone, "hosted-zone", "H", "", "Hosted zone to update")
 	watchCmd.Flags().StringVarP(&checkID, "check-id", "C", "", "CheckID to use for IP output")
 	watchCmd.Flags().StringSliceVarP(&domains, "domain", "D", []string{}, "Full domain name to keep global IPs")
+
+	viper.SetEnvPrefix("collector")
+	viper.BindEnv("hosted_zone")
+	viper.BindEnv("check_id")
+	viper.BindEnv("domain")
+
+	cobra.OnInitialize(initEnviron)
+}
+
+func initEnviron() {
+	if hostedZone == "" {
+		hostedZone = viper.GetString("hosted_zone")
+	}
+	if checkID == "" {
+		checkID = viper.GetString("check_id")
+	}
+	if len(domains) == 0 {
+		domains = viper.GetStringSlice("domain")
+	}
 }
 
 func runWatcher() int {
