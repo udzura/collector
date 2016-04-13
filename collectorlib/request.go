@@ -3,6 +3,7 @@ package collectorlib
 import (
 	"encoding/json"
 	"io"
+	"sort"
 
 	"github.com/hashicorp/consul/consul/structs"
 )
@@ -57,5 +58,6 @@ func (req Request) IPsByTag(tag string) []string {
 		}
 	}
 
+	sort.String(ips)
 	return ips
 }

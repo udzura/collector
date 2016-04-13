@@ -57,6 +57,8 @@ func initEnviron() {
 }
 
 func runWatcher() int {
+	collectorlib.Logger.Infof("Watch called: hostedZone=%s, domains=%v, checkID=%s", hostedZone, domains, checkID)
+
 	reader := bufio.NewReader(os.Stdin)
 	_, err := reader.Peek(1)
 	if err != nil {
@@ -105,6 +107,7 @@ func runWatcher() int {
 	}
 
 	for _, domain := range domainModels {
+		collectorlib.Logger.Infof("handling domain: %s", domain.FQDN)
 		ips := req.IPsByTag(domain.Tag)
 		if len(ips) == 0 {
 			collectorlib.Logger.Warnln("Hey, no Ip included. Skipping for fail-safe.")
