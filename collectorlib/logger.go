@@ -9,6 +9,11 @@ import (
 var Logger = logrus.New()
 
 func init() {
-	logrus.SetOutput(os.Stderr)
-	logrus.SetLevel(logrus.InfoLevel)
+	Logger.Formatter = &logrus.TextFormatter{ForceColors: true}
+	Logger.Out = os.Stderr
+	Logger.Level = logrus.InfoLevel
+}
+
+func SwitchToVerbose() {
+	Logger.Level = logrus.DebugLevel
 }

@@ -5,9 +5,11 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
+	"github.com/udzura/collector/collectorlib"
 )
 
-var Verbose bool
+var verbose bool
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -16,7 +18,8 @@ var RootCmd = &cobra.Command{
 	Long:  `Collector of global IP and put them into DNS.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+	//Run: func(cmd *cobra.Command, args []string) {
+	//},
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
@@ -29,15 +32,17 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
+	cobra.OnInitialize(judgeVerbose)
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports Persistent Flags, which, if defined here,
 	// will be global for your application.
-	RootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "Set verbose mode")
+	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Set verbose mode")
 }
 
 // initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	// No config used
+func judgeVerbose() {
+	if verbose {
+		collectorlib.SwitchToVerbose()
+	}
 }
