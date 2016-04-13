@@ -58,6 +58,6 @@ func (req Request) IPsByTag(tag string) []string {
 		}
 	}
 
-	sort.String(ips)
+	sort.Strings(ips)
 	return ips
 }
