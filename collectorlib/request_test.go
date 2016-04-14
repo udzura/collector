@@ -24,7 +24,7 @@ var testJson = `[
 	"Name": "Service 'nginx' check",
 	"Status": "passing",
 	"Notes": "",
-	"Output": "ipaddr:192.0.2.101",
+	"Output": "ipaddr:192.0.2.101\n",
 	"ServiceID": "redis",
 	"ServiceName": "redis"
       },
@@ -58,7 +58,7 @@ var testJson = `[
 	"Name": "Service 'nginx' check",
 	"Status": "passing",
 	"Notes": "",
-	"Output": "ipaddr:192.0.2.102",
+	"Output": "ipaddr:192.0.2.102\n",
 	"ServiceID": "redis",
 	"ServiceName": "redis"
       },
@@ -92,7 +92,7 @@ var testJson = `[
 	"Name": "Service 'nginx' check",
 	"Status": "passing",
 	"Notes": "",
-	"Output": "ipaddr:192.0.2.103",
+	"Output": "ipaddr:192.0.2.103\n",
 	"ServiceID": "redis",
 	"ServiceName": "redis"
       },
@@ -126,7 +126,7 @@ var testJson = `[
 	"Name": "Service 'nginx' check",
 	"Status": "failing",
 	"Notes": "",
-	"Output": "ipaddr:192.0.2.104",
+	"Output": "ipaddr:192.0.2.104\n",
 	"ServiceID": "redis",
 	"ServiceName": "redis"
       },
