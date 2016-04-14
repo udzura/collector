@@ -1,0 +1,15 @@
+sudo: false
+
+language: go
+
+go:
+  - 1.5
+  - 1.6
+
+script:
+  - go get ./...
+  - make
+
+notifications:
+  slack:
+    secure: MDMli9pULJcH8BDFqclQ0UDUH2jIVNjAUg021cOZyGVDtMSbNqKpllPt2U17XqnFkp1z7EIFASvHb0yY8mtKMVtBsaoTGOBggl0Dflm3FP87iJgGER+OhhPloYhyNI3e+YFi+f0aLz5aUrHcuhjpGTQW8Eh+wTRJmf6MppUROmWDBZsEF3LE6nSTk615x4E/uSg+bmT+9KalZCP9gY3XclWIl/1xKQdag2HHmbq52k4BlZFO+op2fxhJf4lpDQpsrQlZ5hv4Lz2ZR0nYlyphlbk2SAdKFxFB8pl/RDpQ94NXzHfWr/FhjIa4xuWy5jFeEKTO4PfjgLvSlxqRhJQywOVJNQvhXGSxt8i52/DdLrxxFCrNOQLvDLHJ8JQYnayMtU+6NQERupZtKg5zwGIPGcrquaBI35np6JTlxqGobt4eTME16lsJfJL9Ah89Mgp9pKZ0O3ZFJFTIU9CTRNEMBEmLegobSOjGv/CPehb22ZKPIRYcUgfcU34anwfhmPa/UxRjWIYOrWV9zZR+tLdP37gzGGVTtzG9jZZXYOEoGNr3hYly2UfjFIrEYSWWhS6x9VMJQbp89XlQP/857DmWw23tiOnoVAkpBIMUyP6n5Wo4jVVGk/A8P8PHMRULLY9m9Zsnz6U8CJB6v+k64oi1zdfnC7RypSiUxi2TXxAdsx8=
