@@ -2,6 +2,8 @@
 
 Collector of global IP and put them into DNS
 
+[![Build Status](https://travis-ci.org/udzura/collector.svg?branch=master)](https://travis-ci.org/udzura/collector)
+
 ## How to use
 
 * Install binary
