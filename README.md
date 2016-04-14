@@ -2,16 +2,16 @@
 
 Collector of global IP and put them into DNS
 
-[![Build Status](https://travis-ci.org/udzura/collector.svg?branch=master)](https://travis-ci.org/udzura/collector)
+[![Build Status](https://travis-ci.org/udzura/collector.svg)](https://travis-ci.org/udzura/collector)
 
 ## How to use
 
 * Install binary
 
 ```bash
-wget https://github.com/udzura/collector/releases/download/v0.2.0/collector_v0.2.0-linux-amd64.zip
-unzip collector_v0.2.0-linux-amd64.zip
-sudo cp collector_v0.2.0-linux-amd64 /usr/local/bin/collector
+wget https://github.com/udzura/collector/releases/download/v0.3.3/collector_v0.3.3-linux-amd64.zip
+unzip collector_v0.3.3-linux-amd64.zip
+sudo cp collector_v0.3.3-linux-amd64 /usr/local/bin/collector
 ```
 
 * collector is dependent on [consul](https://www.consul.io/), so create its cluster.
@@ -108,7 +108,7 @@ After this, check with `lb-a` effects domain `front-a.foo.example.com`, and `lb-
 * `collector watch` respects environment variables:
   * Which are useful working with systemd unit file
   * `COLLECTOR_HOSTED_ZONE`, `COLLECTOR_DOMAIN` and `COLLECTOR_CHECK_ID`.
-  * Note: `COLLECTOR_DOMAIN` shoulw be splited with white space ` `
+  * Note: `COLLECTOR_DOMAIN` should be splited with white space `" "`
 
 ## Note
 
