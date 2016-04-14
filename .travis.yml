@@ -7,6 +7,7 @@ go:
   - 1.6
 
 script:
+  - go get ./...
   - make
 
 notifications:
