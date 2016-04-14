@@ -9,7 +9,7 @@ func FindIPFromOutput(output string) string {
 			continue
 		}
 		if pair[0] == "ipaddr" {
-			return pair[1]
+			return strings.TrimSpace(pair[1])
 		}
 	}
 
