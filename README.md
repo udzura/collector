@@ -112,7 +112,7 @@ After this, check with `lb-a` effects domain `front-a.foo.example.com`, and `lb-
 
 ## Note
 
-* This product is exoerimental and before alpha release.
+* This product is experimental and before alpha release.
 
 ## Contributing
 
