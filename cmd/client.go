@@ -11,9 +11,12 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/udzura/collector/collectorlib"
+	"net/http"
+	"io/ioutil"
 )
 
 var deviceName string
+var url string
 
 var ipFinder = regexp.MustCompile(`inet \d+\.\d+\.\d+\.\d+`)
 
@@ -32,6 +35,7 @@ This subcommand ins intendec to run under consul checker.`,
 func init() {
 	RootCmd.AddCommand(clientCmd)
 	clientCmd.Flags().StringVarP(&deviceName, "dev", "D", "eth0", "Device name which has the instance's global IP")
+	clientCmd.Flags().StringVarP(&url, "url", "U", "", "Get instance's global IP from URL")
 }
 
 func runCheck(args []string) int {
@@ -64,19 +68,11 @@ func runCheck(args []string) int {
 		sign = "NG"
 	}
 
-	ipcmd := exec.Command("/sbin/ip", "address", "show", deviceName)
-	ipOut, err := ipcmd.Output()
+	gip, err := getGIP(url, deviceName)
 	if err != nil {
 		collectorlib.Logger.Errorf("Somthing is wrong with getting ip: %s", err.Error())
 		return -1
 	}
-
-	res := ipFinder.Find(ipOut)
-	if len(res) == 0 {
-		collectorlib.Logger.Errorf("Somthing is wrong with getting ip: response is empty")
-		return -1
-	}
-	gip := strings.TrimPrefix(string(res), "inet ")
 
 	rep := strings.NewReplacer("\n", " ", "\t", " ")
 	checkOutEscaped := rep.Replace(string(checkOut))
@@ -84,4 +80,47 @@ func runCheck(args []string) int {
 		sign, exitStatus, checkOutEscaped, gip)
 
 	return exitStatus
+}
+
+func getGIP(url string, deviceName string) (gip string, err error) {
+	if url != "" {
+		gip, err = getGIPFromURL(url)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		gip, err = getGIPFromDevice(deviceName)
+		if err != nil {
+			return "", err
+		}
+	}
+	return gip, nil
+}
+
+func getGIPFromURL(url string) (gip string, err error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(body), nil
+}
+
+func getGIPFromDevice(deviceName string) (gip string, err error) {
+	ipcmd := exec.Command("/sbin/ip", "address", "show", deviceName)
+	ipOut, err := ipcmd.Output()
+	if err != nil {
+		return "", err
+	}
+
+	res := ipFinder.Find(ipOut)
+	if len(res) == 0 {
+		return "", errors.New("response is empty")
+	}
+	gip = strings.TrimPrefix(string(res), "inet ")
+	return gip, nil
 }
