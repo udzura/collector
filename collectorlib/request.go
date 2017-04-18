@@ -49,7 +49,7 @@ func (req Request) IPsByTag(tag string) []string {
 		}
 
 		for _, c := range check.Checks {
-			if c.CheckID == req.TargetCheckID && c.Status == "passing" {
+			if string(c.CheckID) == req.TargetCheckID && c.Status == "passing" {
 				ip := FindIPFromOutput(c.Output)
 				if ip != "" {
 					ips = append(ips, ip)
