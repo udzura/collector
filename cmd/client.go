@@ -35,7 +35,7 @@ This subcommand ins intendec to run under consul checker.`,
 func init() {
 	RootCmd.AddCommand(clientCmd)
 	clientCmd.Flags().StringVarP(&deviceName, "dev", "D", "eth0", "Device name which has the instance's global IP")
-	clientCmd.Flags().StringVarP(&url, "url", "U", "", "Get instance's global IP from URL")
+	clientCmd.Flags().StringVarP(&url, "url", "U", "", "Get instance's global IP from URL. (For example, http://169.254.169.254/latest/meta-data/public-ipv4)")
 }
 
 func runCheck(args []string) int {
