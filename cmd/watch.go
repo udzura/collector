@@ -44,6 +44,8 @@ func init() {
 	viper.BindEnv("hosted_zone")
 	viper.BindEnv("check_id")
 	viper.BindEnv("domain")
+	viper.BindEnv("set_id")
+	viper.BindEnv("weight")
 
 	cobra.OnInitialize(initEnviron)
 }
@@ -58,10 +60,17 @@ func initEnviron() {
 	if len(domains) == 0 {
 		domains = viper.GetStringSlice("domain")
 	}
+	if viper.IsSet("set_id") {
+		setID = viper.GetString("set_id")
+	}
+	if viper.IsSet("weight") {
+		weight = viper.GetInt64("weight")
+	}
+
 }
 
 func runWatcher() int {
-	collectorlib.Logger.Infof("Watch called: hostedZone=%s, domains=%v, checkID=%s", hostedZone, domains, checkID)
+	collectorlib.Logger.Infof("Watch called: hostedZone=%s, domains=%v, checkID=%s, setID=%s, weight=%d", hostedZone, domains, checkID, setID, weight)
 
 	reader := bufio.NewReader(os.Stdin)
 	_, err := reader.Peek(1)
