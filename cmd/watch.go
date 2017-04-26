@@ -157,19 +157,23 @@ func runWatcher() int {
 					Value: aws.String(ip),
 				})
 			}
+			rrset := &route53.ResourceRecordSet{
+				Name:            aws.String(domain.FQDN + "."),
+				Type:            aws.String("A"),
+				ResourceRecords: rrs,
+				TTL:             aws.Int64(60),
+			}
+			if setID != "" {
+				rrset.SetSetIdentifier(*aws.String(setID))
+				rrset.SetWeight(*aws.Int64(weight))
+			}
+
 			p3 := &route53.ChangeResourceRecordSetsInput{
 				ChangeBatch: &route53.ChangeBatch{
 					Changes: []*route53.Change{
 						{
 							Action: aws.String("UPSERT"),
-							ResourceRecordSet: &route53.ResourceRecordSet{
-								Name:            aws.String(domain.FQDN + "."),
-								Type:            aws.String("A"),
-								ResourceRecords: rrs,
-								TTL:             aws.Int64(60),
-								SetIdentifier: aws.String(setID),
-								Weight: aws.Int64(weight),
-							},
+							ResourceRecordSet: rrset,
 						},
 					},
 					Comment: aws.String("Update via collector"),
