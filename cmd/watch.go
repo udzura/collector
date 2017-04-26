@@ -17,6 +17,8 @@ import (
 var hostedZone string
 var checkID string
 var domains []string
+var setID string
+var weight int64
 
 // watchCmd represents the watch command
 var watchCmd = &cobra.Command{
@@ -35,6 +37,8 @@ func init() {
 	watchCmd.Flags().StringVarP(&hostedZone, "hosted-zone", "H", "", "Hosted zone to update")
 	watchCmd.Flags().StringVarP(&checkID, "check-id", "C", "", "CheckID to use for IP output")
 	watchCmd.Flags().StringSliceVarP(&domains, "domain", "D", []string{}, "Full domain name to keep global IPs")
+	watchCmd.Flags().StringVarP(&setID, "set-id", "S", "", "SetIdentifier")
+	watchCmd.Flags().Int64VarP(&weight, "weight", "W", 0, "Round Robin Weight")
 
 	viper.SetEnvPrefix("collector")
 	viper.BindEnv("hosted_zone")
@@ -154,6 +158,8 @@ func runWatcher() int {
 								Type:            aws.String("A"),
 								ResourceRecords: rrs,
 								TTL:             aws.Int64(60),
+								SetIdentifier: aws.String(setID),
+								Weight: aws.Int64(weight),
 							},
 						},
 					},
