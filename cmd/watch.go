@@ -17,6 +17,8 @@ import (
 var hostedZone string
 var checkID string
 var domains []string
+var setID string
+var weight int64
 
 // watchCmd represents the watch command
 var watchCmd = &cobra.Command{
@@ -35,11 +37,15 @@ func init() {
 	watchCmd.Flags().StringVarP(&hostedZone, "hosted-zone", "H", "", "Hosted zone to update")
 	watchCmd.Flags().StringVarP(&checkID, "check-id", "C", "", "CheckID to use for IP output")
 	watchCmd.Flags().StringSliceVarP(&domains, "domain", "D", []string{}, "Full domain name to keep global IPs")
+	watchCmd.Flags().StringVarP(&setID, "set-id", "S", "", "SetIdentifier")
+	watchCmd.Flags().Int64VarP(&weight, "weight", "W", 0, "Round Robin Weight")
 
 	viper.SetEnvPrefix("collector")
 	viper.BindEnv("hosted_zone")
 	viper.BindEnv("check_id")
 	viper.BindEnv("domain")
+	viper.BindEnv("set_id")
+	viper.BindEnv("weight")
 
 	cobra.OnInitialize(initEnviron)
 }
@@ -54,10 +60,17 @@ func initEnviron() {
 	if len(domains) == 0 {
 		domains = viper.GetStringSlice("domain")
 	}
+	if viper.IsSet("set_id") {
+		setID = viper.GetString("set_id")
+	}
+	if viper.IsSet("weight") {
+		weight = viper.GetInt64("weight")
+	}
+
 }
 
 func runWatcher() int {
-	collectorlib.Logger.Infof("Watch called: hostedZone=%s, domains=%v, checkID=%s", hostedZone, domains, checkID)
+	collectorlib.Logger.Infof("Watch called: hostedZone=%s, domains=%v, checkID=%s, setID=%s, weight=%d", hostedZone, domains, checkID, setID, weight)
 
 	reader := bufio.NewReader(os.Stdin)
 	_, err := reader.Peek(1)
@@ -144,17 +157,23 @@ func runWatcher() int {
 					Value: aws.String(ip),
 				})
 			}
+			rrset := &route53.ResourceRecordSet{
+				Name:            aws.String(domain.FQDN + "."),
+				Type:            aws.String("A"),
+				ResourceRecords: rrs,
+				TTL:             aws.Int64(60),
+			}
+			if setID != "" {
+				rrset.SetSetIdentifier(*aws.String(setID))
+				rrset.SetWeight(*aws.Int64(weight))
+			}
+
 			p3 := &route53.ChangeResourceRecordSetsInput{
 				ChangeBatch: &route53.ChangeBatch{
 					Changes: []*route53.Change{
 						{
 							Action: aws.String("UPSERT"),
-							ResourceRecordSet: &route53.ResourceRecordSet{
-								Name:            aws.String(domain.FQDN + "."),
-								Type:            aws.String("A"),
-								ResourceRecords: rrs,
-								TTL:             aws.Int64(60),
-							},
+							ResourceRecordSet: rrset,
 						},
 					},
 					Comment: aws.String("Update via collector"),
