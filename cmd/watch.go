@@ -134,6 +134,9 @@ func runWatcher() int {
 			StartRecordName: aws.String(domain.FQDN + "."),
 			StartRecordType: aws.String("A"),
 		}
+		if setID != "" {
+			p2.StartRecordIdentifier = aws.String(setID)
+		}
 		r2, err := svc.ListResourceRecordSets(p2)
 		if err != nil {
 			collectorlib.Logger.Errorln(err.Error())
